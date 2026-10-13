@@ -65,6 +65,9 @@ class DemoWorkspaceTest extends TestCase
         $this->assertDatabaseHas('payroll_batches', ['company_id' => $demoCompanyId]);
         $this->assertDatabaseHas('transport_trips', ['company_id' => $demoCompanyId]);
         $this->assertDatabaseHas('immobilier_properties', ['company_id' => $demoCompanyId]);
+        $this->assertSame(3, DB::table('amicale_records')->where('company_id', $demoCompanyId)->where('type', 'member')->count());
+        $this->assertSame(1, DB::table('amicale_records')->where('company_id', $demoCompanyId)->where('type', 'dues_period')->count());
+        $this->assertSame(2, DB::table('amicale_records')->where('company_id', $demoCompanyId)->where('type', 'contribution')->count());
 
         $demoBootstrap = $request->getJson('/api/app-state/bootstrap')
             ->assertOk()

@@ -1558,7 +1558,9 @@ final class DemoWorkspaceSeeder
             }
         }
         if (Schema::hasTable('amicale_records')) {
-            DB::table('amicale_records')->insertOrIgnore($rows);
+            foreach ($rows as $row) {
+                DB::table('amicale_records')->insertOrIgnore($row);
+            }
         }
     }
 
