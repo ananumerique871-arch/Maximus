@@ -14,3 +14,9 @@ Pour Immobilier, la liste canonique doit rester synchronisée à quatre endroits
 **Why:** Une correction limitée à deux liens peut laisser les autres fonctionnalités Immobilier afficher le même écran, ce qui rend le routage nominal mais le parcours métier incohérent.
 
 **How to apply:** Ajouter toute nouvelle fonctionnalité dans `getModuleFeatureOptions`, le test de routes Immobilier et la table de vues du module avant de la publier dans un pack.
+
+Dans le menu des comptes employés et managers, la sélection de fonctionnalités d’une unité ne peut qu’affiner le menu : elle doit être recoupée avec le droit `voir` du rôle. Une sélection d’unité plus large ne doit pas exposer les entrées non accordées.
+
+**Why:** Les sélections explicites d’unité peuvent être plus larges que les droits d’un employé; les utiliser seules rend le menu incohérent avec l’autorisation effective.
+
+**How to apply:** Calculer les fonctionnalités visibles comme l’intersection de la sélection de l’unité et des permissions de lecture du rôle, en gardant les contrôles API comme autorité.

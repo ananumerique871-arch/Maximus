@@ -50,6 +50,46 @@ test('le menu latéral générique respecte les fonctionnalités sélectionnées
   ]);
 });
 
+test('les fonctionnalités d’une unité restent limitées aux droits Voir du rôle', () => {
+  const employeeNode = {
+    id: 'unit-limited',
+    companyId: 'company-test',
+    name: 'Unité limitée',
+    type: 'service' as const,
+    parentId: null,
+    moduleIds: ['immobilier', 'amicales', 'ecommerce'],
+    moduleFeatures: {
+      immobilier: ['biens', 'annonces'],
+      amicales: ['dashboard', 'membres'],
+      ecommerce: ['catalogue', 'commandes'],
+    },
+  };
+  const employeeRole = {
+    id: 'limited-reader',
+    name: 'Lecteur limité',
+    description: '',
+    modulePermissions: {
+      'immobilier:menu:biens': ['voir'],
+      'amicales:menu:dashboard': ['voir'],
+      'ecommerce:menu:catalogue': ['voir'],
+    },
+  };
+  const groups = buildSidebarFeatureGroups({
+    allowed: ['immobilier', 'amicales', 'ecommerce'],
+    configuredModules,
+    employeeRole,
+    employeeNode,
+    ecommerceFeatureIds: ['catalogue', 'commandes'],
+  });
+
+  assert.deepEqual(groups.flatMap(group => group.items.map(item => item.href)), [
+    '/entreprise/immobilier?feature=biens',
+    '/entreprise/amicales?feature=dashboard',
+    '/entreprise/ecommerce?tab=catalogue',
+    '/entreprise/ecommerce?tab=categories',
+  ]);
+});
+
 test('un employé retrouve les fonctionnalités de plusieurs modules dans le menu unique', () => {
   const groups = buildSidebarFeatureGroups({
     allowed: ['commerce', 'stocks'],

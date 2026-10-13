@@ -165,6 +165,13 @@ export function buildSidebarFeatureGroups({
           module,
           employeeNode?.moduleFeatures?.[module.id],
         );
+    const visibleFeatureIds = employeeRole
+      ? new Set(
+          [...selectedFeatureIds].filter(featureId =>
+            roleHasFeaturePermission(employeeRole, employeeNode, module.id, featureId, 'voir'),
+          ),
+        )
+      : selectedFeatureIds;
 
     if (moduleId === 'ecommerce' && allowed.includes('commerce')) return [];
 
@@ -172,9 +179,11 @@ export function buildSidebarFeatureGroups({
       const items: SidebarFeatureGroup['items'] = [];
       if (allowed.includes('commerce')) {
         const visibleCommerceTabs = commerceTabIds
-          ? commerceTabDefinitions.filter(tab => commerceTabIds.includes(tab.id))
+          ? commerceTabDefinitions.filter(tab =>
+              commerceTabIds.includes(tab.id)
+              && (!employeeRole || visibleFeatureIds.has(tab.id)))
           : companyAdmin
-            ? commerceTabDefinitions.filter(tab => !hasExplicitCompanySelection || selectedFeatureIds.has(tab.id))
+            ? commerceTabDefinitions.filter(tab => !hasExplicitCompanySelection || visibleFeatureIds.has(tab.id))
             : [];
         items.push(...visibleCommerceTabs.map(tab => ({
           href: `/entreprise/commerce?tab=${tab.id}`,
@@ -188,18 +197,21 @@ export function buildSidebarFeatureGroups({
         if (ecommerceModule) {
           const hasExplicitEcommerceSelection =
             Object.prototype.hasOwnProperty.call(selectedFeatureIdsByModule ?? {}, 'ecommerce');
+          const ecommerceFeatures = ecommerceFeatureIds
+            ?? (moduleId === 'ecommerce'
+              ? [...visibleFeatureIds]
+              : getModuleFeatureOptions(ecommerceModule)
+                .filter(feature => !(
+                  companyAdmin
+                  && !employeeRole
+                  && !hasExplicitEcommerceSelection
+                  && feature.id === 'rapport-ventes'
+                ))
+                .map(feature => feature.id));
           const features = new Set(
-            ecommerceFeatureIds
-              ?? (moduleId === 'ecommerce'
-                ? [...selectedFeatureIds]
-                : getModuleFeatureOptions(ecommerceModule)
-                  .filter(feature => !(
-                    companyAdmin
-                    && !employeeRole
-                    && !hasExplicitEcommerceSelection
-                    && feature.id === 'rapport-ventes'
-                  ))
-                  .map(feature => feature.id)),
+            ecommerceFeatures.filter(featureId =>
+              !employeeRole || visibleFeatureIds.has(featureId),
+            ),
           );
           const canViewSalesReport = (companyAdmin && !employeeRole)
             || roleHasFeaturePermission(employeeRole, employeeNode, ecommerceModule.id, 'rapport-ventes', 'voir');
@@ -224,14 +236,14 @@ export function buildSidebarFeatureGroups({
         : moduleId === 'ecommerce'
           ? buildEcommerceNavigationItems(
             module,
-            selectedFeatureIds,
+            visibleFeatureIds,
             (companyAdmin && !employeeRole)
               || roleHasFeaturePermission(employeeRole, employeeNode, module.id, 'rapport-ventes', 'voir'),
           )
         : moduleId === 'presences'
           ? getModuleFeatureOptions(module)
             .filter(feature => Boolean(
-              selectedFeatureIds.has(feature.id)
+              visibleFeatureIds.has(feature.id)
               && (companyAdmin
                 || roleHasFeaturePermission(employeeRole, employeeNode, module.id, feature.id, 'voir')),
             ))
@@ -252,7 +264,7 @@ export function buildSidebarFeatureGroups({
           : moduleId === 'transport'
             ? getModuleFeatureOptions(module)
               .filter(feature =>
-                selectedFeatureIds.has(feature.id)
+                visibleFeatureIds.has(feature.id)
                 && (companyAdmin && !employeeRole
                   ? true
                   : roleHasFeaturePermission(employeeRole, employeeNode, module.id, feature.id, 'voir')))
@@ -264,7 +276,7 @@ export function buildSidebarFeatureGroups({
             : moduleId === 'immobilier'
               ? getModuleFeatureOptions(module)
                 .filter(feature =>
-                  selectedFeatureIds.has(feature.id)
+                  visibleFeatureIds.has(feature.id)
                   && (companyAdmin && !employeeRole
                     ? true
                     : roleHasFeaturePermission(employeeRole, employeeNode, module.id, feature.id, 'voir')))
@@ -275,14 +287,14 @@ export function buildSidebarFeatureGroups({
                 }))
             : moduleId === 'amicales'
               ? getModuleFeatureOptions(module)
-                .filter(feature => selectedFeatureIds.has(feature.id))
+                .filter(feature => visibleFeatureIds.has(feature.id))
                 .map(feature => ({
                   href: `/entreprise/amicales?feature=${feature.id}`,
                   label: feature.label,
                   icon: LayoutGrid,
                 }))
               : module.features
-                .filter(feature => selectedFeatureIds.has(featureSlug(feature)))
+                .filter(feature => visibleFeatureIds.has(featureSlug(feature)))
                 .map(feature => featureSlug(feature))
                 .map(featureId => ({
                   href: `/entreprise/${moduleId}?feature=${featureId}`,
