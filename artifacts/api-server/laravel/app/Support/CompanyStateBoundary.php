@@ -56,10 +56,9 @@ final class CompanyStateBoundary
 
         if ($role === 'company_admin') {
             foreach ($incoming as $key => $value) {
-                if (array_key_exists($key, $current)
-                    && ! in_array($key, $companyCollections, true)
+                if (! in_array($key, $companyCollections, true)
                     && $key !== 'commerceStates'
-                    && $current[$key] !== $value) {
+                    && ($current[$key] ?? null) !== $value) {
                     return ['error' => 'La configuration globale est réservée à MAXIMUS.', 'status' => 403];
                 }
             }

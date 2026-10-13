@@ -293,33 +293,6 @@ class AppStateAuditSecurityTest extends TestCase
         $this->assertSame($this->original['moduleOverrides'], $state['moduleOverrides']);
     }
 
-    public function test_company_admin_can_create_organization_units_with_unpersisted_client_defaults(): void
-    {
-        $this->putJson('/api/app-state', [
-            'version' => 1,
-            'data' => [
-                'orgNodes' => [[
-                    'id' => 'unit-new',
-                    'companyId' => 'audit-a',
-                    'name' => 'Direction',
-                    'parentId' => null,
-                ]],
-                'moduleOverrides' => $this->original['moduleOverrides'],
-                'moduleStatuses' => [],
-                'sectorPresets' => [],
-                'removedModules' => [],
-                'catalogVersion' => 1,
-                'organizationVersion' => 1,
-            ],
-        ])->assertOk();
-
-        $state = json_decode(DB::table('maximus_app_states')->where('scope', 'workspace')->value('payload'), true);
-        $this->assertSame('unit-new', $state['orgNodes'][0]['id']);
-        $this->assertSame($this->original['moduleOverrides'], $state['moduleOverrides']);
-        $this->assertArrayNotHasKey('organizationVersion', $state);
-        $this->assertArrayNotHasKey('sectorPresets', $state);
-    }
-
     private function loginAs(string $role): void
     {
         $user = AuthUser::query()->create([
